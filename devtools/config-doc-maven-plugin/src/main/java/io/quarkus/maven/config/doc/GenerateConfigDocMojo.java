@@ -129,7 +129,7 @@ public class GenerateConfigDocMojo extends AbstractMojo {
 
                 try {
                     Files.writeString(configRootPath,
-                            generateConfigReference(quteEngine, context, extension, configRoot, "", true));
+                            generateConfigReference(quteEngine, normalizedFormat, context, extension, configRoot, "", true));
                 } catch (Exception e) {
                     throw new MojoExecutionException("Unable to render config roots for top level prefix: " + topLevelPrefix
                             + " in extension: " + extension, e);
@@ -169,7 +169,7 @@ public class GenerateConfigDocMojo extends AbstractMojo {
 
             try {
                 Files.writeString(configRootPath,
-                        generateConfigReference(quteEngine, context, extension, configRoot, "", true));
+                        generateConfigReference(quteEngine, normalizedFormat, context, extension, configRoot, "", true));
             } catch (Exception e) {
                 throw new MojoExecutionException("Unable to render config roots for specific file: " + fileName
                         + " in extension: " + extension, e);
@@ -210,7 +210,7 @@ public class GenerateConfigDocMojo extends AbstractMojo {
 
                 try {
                     Files.writeString(configSectionPath,
-                            generateConfigReference(quteEngine, context, extension, generatedConfigSection,
+                            generateConfigReference(quteEngine, normalizedFormat, context, extension, generatedConfigSection,
                                     "_" + generatedConfigSection.getPath().property(), false));
                 } catch (Exception e) {
                     throw new MojoExecutionException(
@@ -236,7 +236,7 @@ public class GenerateConfigDocMojo extends AbstractMojo {
         }
     }
 
-    private static String generateConfigReference(Engine quteEngine, Context context, Extension extension,
+    private static String generateConfigReference(Engine quteEngine, Format format, Context context, Extension extension,
             ConfigItemCollection configItemCollection, String additionalAnchorPrefix, boolean searchable) {
         return quteEngine.getTemplate("configReference")
                 .data("extension", extension)
@@ -245,9 +245,27 @@ public class GenerateConfigDocMojo extends AbstractMojo {
                 .data("context", context)
                 .data("summaryTableId", context.summaryTableId()) // for backward compatibility, use context instead
                 .data("additionalAnchorPrefix", additionalAnchorPrefix)
-                .data("includeDurationNote", configItemCollection.hasDurationType())
-                .data("includeMemorySizeNote", configItemCollection.hasMemorySizeType())
+                .data("includeDurationNote", includeDurationNote(configItemCollection, format))
+                .data("includeMemorySizeNote", includeMemorySizeNote(configItemCollection, format))
                 .render();
+    }
+
+    /**
+     * Whether a config reference shows a {@code Duration} property, whose row links to the note about the format. The
+     * AsciiDoc table lists the deprecated items of the collection itself, the Markdown one leaves them out.
+     */
+    static boolean includeDurationNote(ConfigItemCollection configItemCollection, Format format) {
+        return format == Format.asciidoc ? configItemCollection.hasDurationTypeIncludingDeprecated()
+                : configItemCollection.hasDurationType();
+    }
+
+    /**
+     * Whether a config reference shows a {@code MemorySize} property, whose row links to the note about the format. The
+     * AsciiDoc table lists the deprecated items of the collection itself, the Markdown one leaves them out.
+     */
+    static boolean includeMemorySizeNote(ConfigItemCollection configItemCollection, Format format) {
+        return format == Format.asciidoc ? configItemCollection.hasMemorySizeTypeIncludingDeprecated()
+                : configItemCollection.hasMemorySizeType();
     }
 
     private static String generateAllConfig(Engine quteEngine, Context context,

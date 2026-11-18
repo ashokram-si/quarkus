@@ -54,4 +54,20 @@ public interface ConfigItemCollection {
     boolean hasDurationType();
 
     boolean hasMemorySizeType();
+
+    /**
+     * Whether a table that lists all of this collection's items, deprecated ones included, shows a {@code Duration}
+     * property. Nested sections count only their non-deprecated items, as the section tag renders them.
+     */
+    default boolean hasDurationTypeIncludingDeprecated() {
+        return getItems().stream().anyMatch(AbstractConfigItem::hasDurationType);
+    }
+
+    /**
+     * Whether a table that lists all of this collection's items, deprecated ones included, shows a {@code MemorySize}
+     * property. Nested sections count only their non-deprecated items, as the section tag renders them.
+     */
+    default boolean hasMemorySizeTypeIncludingDeprecated() {
+        return getItems().stream().anyMatch(AbstractConfigItem::hasMemorySizeType);
+    }
 }
